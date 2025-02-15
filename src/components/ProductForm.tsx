@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { useProduct } from '../context/ProductContext';
+import { useProduct } from '../context/productContext';
 import { useImageUpload } from '../hooks/useImageUpload';
-import { Product, ProductType } from '../types/Product';
+import { Product, ProductType } from '../types/product';
 import { generateSKU } from '../utils/generateSKU';
 
 
@@ -13,13 +13,14 @@ const ProductForm: React.FC = () => {
     const { addProduct, updateProduct, getProduct, products } = useProduct();
     const { uploadImage, uploading, error: uploadError } = useImageUpload();
 
-    const [formData, setFormData] = useState<Partial<Product>>({
+    const [formData, setFormData] = useState<Product>({
         sku: '',
         name: '',
         price: 0,
         imageUrl: '',
         type: 'DVD' as ProductType,
-        attributes: {}
+        attributes: {},
+        createdAt: Date.now()
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -35,7 +36,7 @@ const ProductForm: React.FC = () => {
             }
         } else {
             // Generate new SKU for new products
-            setFormData(prev => ({
+            setFormData((prev: Product) => ({
                 ...prev,
                 sku: generateSKU()
             }));
@@ -127,7 +128,7 @@ const ProductForm: React.FC = () => {
         if (file) {
             try {
                 const imageUrl = await uploadImage(file);
-                setFormData(prev => ({
+                setFormData((prev: Product) => ({
                     ...prev,
                     imageUrl
                 }));
@@ -141,7 +142,7 @@ const ProductForm: React.FC = () => {
     };
 
     const handleTypeChange = (type: ProductType) => {
-        setFormData(prev => ({
+        setFormData((prev: Product) => ({
             ...prev,
             type,
             attributes: {} // Reset attributes when type changes
@@ -169,7 +170,7 @@ const ProductForm: React.FC = () => {
                         id="sku"
                         type="text"
                         value={formData.sku}
-                        onChange={e => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+                        onChange={e => setFormData((prev: Product) => ({ ...prev, sku: e.target.value }))}
                         disabled={!!sku} // Disable SKU field when editing
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
@@ -187,7 +188,7 @@ const ProductForm: React.FC = () => {
                         id="name"
                         type="text"
                         value={formData.name}
-                        onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        onChange={e => setFormData((prev: Product) => ({ ...prev, name: e.target.value }))}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                     {errors.name && (
@@ -205,7 +206,7 @@ const ProductForm: React.FC = () => {
                         type="number"
                         step="0.01"
                         value={formData.price}
-                        onChange={e => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+                        onChange={e => setFormData((prev: Product) => ({ ...prev, price: parseFloat(e.target.value) }))}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                     {errors.price && (
@@ -223,7 +224,7 @@ const ProductForm: React.FC = () => {
                             id="imageUrl"
                             type="text"
                             value={formData.imageUrl}
-                            onChange={e => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                            onChange={e => setFormData((prev: Product) => ({ ...prev, imageUrl: e.target.value }))}
                             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                         <input
@@ -275,7 +276,7 @@ const ProductForm: React.FC = () => {
                             id="size"
                             type="number"
                             value={formData.attributes?.size || ''}
-                            onChange={e => setFormData(prev => ({
+                            onChange={e => setFormData((prev: Product) => ({
                                 ...prev,
                                 attributes: { size: parseFloat(e.target.value) }
                             }))}
@@ -298,7 +299,7 @@ const ProductForm: React.FC = () => {
                             type="number"
                             step="0.1"
                             value={formData.attributes?.weight || ''}
-                            onChange={e => setFormData(prev => ({
+                            onChange={e => setFormData((prev: Product) => ({
                                 ...prev,
                                 attributes: { weight: parseFloat(e.target.value) }
                             }))}
@@ -322,7 +323,7 @@ const ProductForm: React.FC = () => {
                                 id="height"
                                 type="number"
                                 value={formData.attributes?.dimensions?.height || ''}
-                                onChange={e => setFormData(prev => ({
+                                onChange={e => setFormData((prev: Product) => ({
                                     ...prev,
                                     attributes: {
                                         ...prev.attributes,
@@ -348,7 +349,7 @@ const ProductForm: React.FC = () => {
                                 id="width"
                                 type="number"
                                 value={formData.attributes?.dimensions?.width || ''}
-                                onChange={e => setFormData(prev => ({
+                                onChange={e => setFormData((prev: Product) => ({
                                     ...prev,
                                     attributes: {
                                         ...prev.attributes,
@@ -374,7 +375,7 @@ const ProductForm: React.FC = () => {
                                 id="length"
                                 type="number"
                                 value={formData.attributes?.dimensions?.length || ''}
-                                onChange={e => setFormData(prev => ({
+                                onChange={e => setFormData((prev: Product) => ({
                                     ...prev,
                                     attributes: {
                                         ...prev.attributes,

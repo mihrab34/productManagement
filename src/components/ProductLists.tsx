@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useProduct } from '../context/ProductContext';
-import { Product } from '../types/Product';
+import { useProduct } from '../context/productContext';
+import { Product } from '../types/product';
 
 const ProductLists: React.FC = () => {
     const { products, deleteProducts } = useProduct();
