@@ -1,7 +1,7 @@
 export type ProductType = 'DVD' | 'Book' | 'Furniture';
 
 
-interface ProductAttributes{
+export interface ProductAttributes{
   size?: number;
   weight?: number;
   dimensions?: {
