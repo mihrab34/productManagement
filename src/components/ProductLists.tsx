@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useProduct } from '../hooks/useProduct';
-import { Product } from '../types/product';
+import { useProduct } from '../context/ProductContext';
+import { Product } from '../types/Product';
 
 const ProductLists: React.FC = () => {
     const { products, deleteProducts } = useProduct();
@@ -10,7 +10,7 @@ const ProductLists: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const productsPerPage = 10;
 
-    const sortedProducts = [...products.sort((a, b) => b.createdAt - a.createdAt)];
+    const sortedProducts = [...products.sort((a: Product, b: Product) => b.createdAt - a.createdAt)];
     const indexOfLastProduct = currentPage * productsPerPage;
     const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
     const currentProducts = sortedProducts.slice(indexOfFirstProduct, indexOfLastProduct);
@@ -49,21 +49,21 @@ const ProductLists: React.FC = () => {
                 <div className='flex gap-2'>
                     {selectedProducts.length > 0 ? (
                         <button
-                            className="bg-green-700 text-white px-3 py-1 rounded"
+                            className="bg-green-700 text-white px-3 py-1 rounded cursor-pointer"
                             onClick={() => navigate(`/edit-product/${selectedProducts[0]}`)}
                         >
                             EDIT
                         </button>
                     ) : (
                         <button
-                            className="bg-blue-500 text-white px-3 py-1 rounded"
+                            className="bg-blue-500 text-white px-3 py-1 rounded cursor-pointer"
                             onClick={() => navigate('/new-product')}
                         >
                             ADD
                         </button>
                     )}
                     <button
-                        className="bg-red-500 text-white px-3 py-1 rounded"
+                        className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer"
                         onClick={handleMassDelete}
                     >
                         MASS DELETE

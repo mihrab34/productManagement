@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { useProduct } from '../context/ProductContext';
 import { useImageUpload } from '../hooks/useImageUpload';
-import { useProduct } from '../hooks/useProduct';
-import { Product, ProductType } from '../types/product';
+import { Product, ProductType } from '../types/Product';
 import { generateSKU } from '../utils/generateSKU';
 
 
@@ -45,10 +45,10 @@ const ProductForm: React.FC = () => {
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        // Basic validation
+        // Form validation
         if (!formData.sku?.trim()) {
             newErrors.sku = 'Please, submit required data';
-        } else if (!sku && products.some(p => p.sku === formData.sku)) {
+        } else if (!sku && products.some((p: Product) => p.sku === formData.sku)) {
             newErrors.sku = 'SKU must be unique';
         }
 
@@ -203,7 +203,7 @@ const ProductForm: React.FC = () => {
                     <input
                         id="price"
                         type="number"
-                        // step="0.01"
+                        step="0.01"
                         value={formData.price}
                         onChange={e => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -313,6 +313,7 @@ const ProductForm: React.FC = () => {
 
                 {formData.type === 'Furniture' && (
                     <div className="space-y-4">
+                        {/* Height input */}
                         <div>
                             <label htmlFor="height" className="block text-sm font-medium text-gray-700">
                                 Height (cm)
@@ -325,10 +326,10 @@ const ProductForm: React.FC = () => {
                                     ...prev,
                                     attributes: {
                                         ...prev.attributes,
-                                        // dimensions: {
-                                        //     ...prev.attributes?.dimensions,
-                                        //     height: parseFloat(e.target.value)
-                                        // }
+                                        dimensions: {
+                                            ...(prev.attributes?.dimensions || {}),
+                                            height: parseFloat(e.target.value) || 0
+                                        }
                                     }
                                 }))}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -338,6 +339,7 @@ const ProductForm: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Width input */}
                         <div>
                             <label htmlFor="width" className="block text-sm font-medium text-gray-700">
                                 Width (cm)
@@ -350,10 +352,10 @@ const ProductForm: React.FC = () => {
                                     ...prev,
                                     attributes: {
                                         ...prev.attributes,
-                                        // dimensions: {
-                                        //     ...prev.attributes?.dimensions,
-                                        //     width: parseFloat(e.target.value)
-                                        // }
+                                        dimensions: {
+                                            ...(prev.attributes?.dimensions || {}),
+                                            width: parseFloat(e.target.value) || 0
+                                        }
                                     }
                                 }))}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -363,6 +365,7 @@ const ProductForm: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Length input */}
                         <div>
                             <label htmlFor="length" className="block text-sm font-medium text-gray-700">
                                 Length (cm)
@@ -375,10 +378,10 @@ const ProductForm: React.FC = () => {
                                     ...prev,
                                     attributes: {
                                         ...prev.attributes,
-                                        // dimensions: {
-                                        //     ...prev.attributes?.dimensions,
-                                        //     length: parseFloat(e.target.value)
-                                        // }
+                                        dimensions: {
+                                            ...(prev.attributes?.dimensions || {}),
+                                            length: parseFloat(e.target.value) || 0
+                                        }
                                     }
                                 }))}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"

@@ -17,12 +17,3 @@ export interface Product {
     };
     createdAt: number;
   }
-
-
-  export interface ProductContextType {
-    products: Product[];
-    addProduct: (product: Product) => void;
-    updateProduct: (product: Product) => void;
-    deleteProducts: (sku: string[]) => void;
-    getProduct: (sku: string) => Product | undefined;
-    }
