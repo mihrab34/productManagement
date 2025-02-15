@@ -28,24 +28,23 @@ const ProductLists: React.FC = () => {
         setSelectedProducts([]);
     }
 
+    const productAttributeFormatters = {
+        DVD: (product: Product) => `Size: ${product.attributes.size} MB`,
+        Book: (product: Product) => `Weight: ${product.attributes.weight} kg`,
+        Furniture: (product: Product) => {
+            const { height, width, length } = product.attributes.dimensions!;
+            return `Dimensions: ${height} x ${width} x ${length} cm`;
+        },
+    } as const;
+
     const renderProductAttribute = (product: Product) => {
-        switch (product.type) {
-            case 'DVD':
-                return `Size ${product.attributes.size} MB`;
-            case 'Book':
-                return `Weight ${product.attributes.weight} kg`;
-            case 'Furniture':
-                {
-                    const { height, width, length } = product.attributes.dimensions!;
-                    return `Dimensions ${height} x ${width} x ${length} cm`;
-                }
-            default:
-                return '';
-        }
-    }
+        const formatter = productAttributeFormatters[product.type as keyof typeof productAttributeFormatters];
+        return formatter?.(product) ?? '';
+    };
+
     return (
         <div>
-            <div className="flex justify-between mb-4">
+            <div className="flex justify-between align-middle mb-4 border-b-2 pt-4 pb-3">
                 <h1>Product List</h1>
                 <div className='flex gap-2'>
                     {selectedProducts.length > 0 ? (
@@ -73,26 +72,30 @@ const ProductLists: React.FC = () => {
 
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {currentProducts.map(product => (
                     <div key={product.sku} className="border p-4 rounded">
+
                         <input
                             type="checkbox"
                             checked={selectedProducts.includes(product.sku)}
                             onChange={() => handleCheckboxChange(product.sku)}
                             className="mb-2"
                         />
-                        <p>SKU: {product.sku}</p>
-                        <a
-                            href={product.imageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                        >
-                            {product.name}
-                        </a>
-                        <p>Price: ${product.price}</p>
-                        <p>{renderProductAttribute(product)}</p>
+                        <div className='text-center'>
+                            <p>{product.sku}</p>
+                            <a
+                                href={product.imageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                            >
+                                {product.name}
+                            </a>
+                            <p>{product.price}</p>
+                            <p>{renderProductAttribute(product)}</p>
+                        </div>
+
                     </div>
                 ))}
             </div>
