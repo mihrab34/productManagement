@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useProduct } from '../context/productContext';
 import { useImageUpload } from '../hooks/useImageUpload';
-import { Product, ProductType } from '../types/product';
+import { Product, ProductAttributes, ProductFormData, ProductType } from '../types/product';
+import { validateForm } from '../utils/formValidation';
 import { generateSKU } from '../utils/generateSKU';
 
 
@@ -10,19 +11,19 @@ import { generateSKU } from '../utils/generateSKU';
 const ProductForm: React.FC = () => {
     const { sku } = useParams();
     const navigate = useNavigate();
-    const { addProduct, updateProduct, getProduct, products } = useProduct();
+    const { addProduct, updateProduct, getProduct } = useProduct();
     const { uploadImage, uploading, error: uploadError } = useImageUpload();
 
-    const [formData, setFormData] = useState<Product>({
+    const initialFormData: ProductFormData = {
         sku: '',
         name: '',
         price: 0,
         imageUrl: '',
         type: 'DVD' as ProductType,
-        attributes: {},
-        createdAt: Date.now()
-    });
+        attributes: {}
+    };
 
+    const [formData, setFormData] = useState<ProductFormData>(initialFormData);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,73 +37,43 @@ const ProductForm: React.FC = () => {
             }
         } else {
             // Generate new SKU for new products
-            setFormData((prev: Product) => ({
+            setFormData((prev: ProductFormData) => ({
                 ...prev,
                 sku: generateSKU()
             }));
         }
     }, [sku, getProduct, navigate]);
 
-    const validateForm = () => {
-        const newErrors: Record<string, string> = {};
-
-        // Form validation
-        if (!formData.sku?.trim()) {
-            newErrors.sku = 'Please, submit required data';
-        } else if (!sku && products.some((p: Product) => p.sku === formData.sku)) {
-            newErrors.sku = 'SKU must be unique';
-        }
-
-        if (!formData.name?.trim()) {
-            newErrors.name = 'Please, submit required data';
-        }
-
-        if (!formData.price || formData.price <= 0) {
-            newErrors.price = 'Please, provide valid price';
-        }
-
-        if (!formData.imageUrl?.trim()) {
-            newErrors.imageUrl = 'Please, submit required data';
-        }
-
-        // Type-specific validation
-        switch (formData.type) {
-            case 'DVD':
-                if (!formData.attributes?.size || formData.attributes.size <= 0) {
-                    newErrors.size = 'Please, provide valid size';
+    const updateDimensions = (field: 'height' | 'width' | 'length', value: number) => {
+        setFormData((prev: ProductFormData) => ({
+            ...prev,
+            attributes: {
+                ...prev.attributes,
+                dimensions: {
+                    ...(prev.attributes.dimensions || { height: 0, width: 0, length: 0 }),
+                    [field]: value
                 }
-                break;
-            case 'Book':
-                if (!formData.attributes?.weight || formData.attributes.weight <= 0) {
-                    newErrors.weight = 'Please, provide valid weight';
-                }
-                break;
-            case 'Furniture':
-                {
-                    const dimensions = formData.attributes?.dimensions;
-                    if (!dimensions?.height || dimensions.height <= 0) {
-                        newErrors.height = 'Please, provide valid height';
-                    }
-                    if (!dimensions?.width || dimensions.width <= 0) {
-                        newErrors.width = 'Please, provide valid width';
-                    }
-                    if (!dimensions?.length || dimensions.length <= 0) {
-                        newErrors.length = 'Please, provide valid length';
-                    }
-                    break;
-                }
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+            }
+        }));
     };
+
+    const updateAttribute = (field: keyof ProductAttributes, value: number) => {
+        setFormData((prev: ProductFormData) => ({
+            ...prev,
+            attributes: {
+                ...prev.attributes,
+                [field]: value
+            }
+        }));
+    };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
         try {
-            if (validateForm()) {
+            if (validateForm(formData, formData.sku, [], setErrors)) {
                 if (sku) {
                     updateProduct(formData as Product);
                 } else {
@@ -128,7 +99,7 @@ const ProductForm: React.FC = () => {
         if (file) {
             try {
                 const imageUrl = await uploadImage(file);
-                setFormData((prev: Product) => ({
+                setFormData((prev: ProductFormData) => ({
                     ...prev,
                     imageUrl
                 }));
@@ -142,7 +113,7 @@ const ProductForm: React.FC = () => {
     };
 
     const handleTypeChange = (type: ProductType) => {
-        setFormData((prev: Product) => ({
+        setFormData((prev: ProductFormData) => ({
             ...prev,
             type,
             attributes: {} // Reset attributes when type changes
@@ -170,7 +141,7 @@ const ProductForm: React.FC = () => {
                         id="sku"
                         type="text"
                         value={formData.sku}
-                        onChange={e => setFormData((prev: Product) => ({ ...prev, sku: e.target.value }))}
+                        onChange={e => setFormData((prev: ProductFormData) => ({ ...prev, sku: e.target.value }))}
                         disabled={!!sku} // Disable SKU field when editing
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
@@ -188,7 +159,7 @@ const ProductForm: React.FC = () => {
                         id="name"
                         type="text"
                         value={formData.name}
-                        onChange={e => setFormData((prev: Product) => ({ ...prev, name: e.target.value }))}
+                        onChange={e => setFormData((prev: ProductFormData) => ({ ...prev, name: e.target.value }))}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                     {errors.name && (
@@ -206,7 +177,7 @@ const ProductForm: React.FC = () => {
                         type="number"
                         step="0.01"
                         value={formData.price}
-                        onChange={e => setFormData((prev: Product) => ({ ...prev, price: parseFloat(e.target.value) }))}
+                        onChange={e => setFormData((prev: ProductFormData) => ({ ...prev, price: parseFloat(e.target.value) }))}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                     {errors.price && (
@@ -224,7 +195,7 @@ const ProductForm: React.FC = () => {
                             id="imageUrl"
                             type="text"
                             value={formData.imageUrl}
-                            onChange={e => setFormData((prev: Product) => ({ ...prev, imageUrl: e.target.value }))}
+                            onChange={e => setFormData((prev: ProductFormData) => ({ ...prev, imageUrl: e.target.value }))}
                             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                         <input
@@ -267,6 +238,58 @@ const ProductForm: React.FC = () => {
                 </div>
 
                 {/* Dynamic Attributes Based on Type */}
+                {formData.type === 'Furniture' && (
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="height" className="block text-sm font-medium text-gray-700">
+                                Height (cm)
+                            </label>
+                            <input
+                                id="height"
+                                type="number"
+                                value={formData.attributes.dimensions?.height || ''}
+                                onChange={e => updateDimensions('height', parseFloat(e.target.value))}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            />
+                            {errors.height && (
+                                <p className="mt-1 text-sm text-red-600">{errors.height}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label htmlFor="width" className="block text-sm font-medium text-gray-700">
+                                Width (cm)
+                            </label>
+                            <input
+                                id="width"
+                                type="number"
+                                value={formData.attributes.dimensions?.width || ''}
+                                onChange={e => updateDimensions('width', parseFloat(e.target.value))}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            />
+                            {errors.width && (
+                                <p className="mt-1 text-sm text-red-600">{errors.width}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label htmlFor="length" className="block text-sm font-medium text-gray-700">
+                                Length (cm)
+                            </label>
+                            <input
+                                id="length"
+                                type="number"
+                                value={formData.attributes.dimensions?.length || ''}
+                                onChange={e => updateDimensions('length', parseFloat(e.target.value))}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            />
+                            {errors.length && (
+                                <p className="mt-1 text-sm text-red-600">{errors.length}</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {formData.type === 'DVD' && (
                     <div>
                         <label htmlFor="size" className="block text-sm font-medium text-gray-700">
@@ -275,17 +298,13 @@ const ProductForm: React.FC = () => {
                         <input
                             id="size"
                             type="number"
-                            value={formData.attributes?.size || ''}
-                            onChange={e => setFormData((prev: Product) => ({
-                                ...prev,
-                                attributes: { size: parseFloat(e.target.value) }
-                            }))}
+                            value={formData.attributes.size || ''}
+                            onChange={e => updateAttribute('size', parseFloat(e.target.value))}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                         {errors.size && (
                             <p className="mt-1 text-sm text-red-600">{errors.size}</p>
                         )}
-                        <p className="mt-1 text-sm text-gray-500">Please, provide size in MB</p>
                     </div>
                 )}
 
@@ -297,101 +316,13 @@ const ProductForm: React.FC = () => {
                         <input
                             id="weight"
                             type="number"
-                            step="0.1"
-                            value={formData.attributes?.weight || ''}
-                            onChange={e => setFormData((prev: Product) => ({
-                                ...prev,
-                                attributes: { weight: parseFloat(e.target.value) }
-                            }))}
+                            value={formData.attributes.weight || ''}
+                            onChange={e => updateAttribute('weight', parseFloat(e.target.value))}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                         {errors.weight && (
                             <p className="mt-1 text-sm text-red-600">{errors.weight}</p>
                         )}
-                        <p className="mt-1 text-sm text-gray-500">Please, provide weight in Kg</p>
-                    </div>
-                )}
-
-                {formData.type === 'Furniture' && (
-                    <div className="space-y-4">
-                        {/* Height input */}
-                        <div>
-                            <label htmlFor="height" className="block text-sm font-medium text-gray-700">
-                                Height (cm)
-                            </label>
-                            <input
-                                id="height"
-                                type="number"
-                                value={formData.attributes?.dimensions?.height || ''}
-                                onChange={e => setFormData((prev: Product) => ({
-                                    ...prev,
-                                    attributes: {
-                                        ...prev.attributes,
-                                        dimensions: {
-                                            ...(prev.attributes?.dimensions || {}),
-                                            height: parseFloat(e.target.value) || 0
-                                        }
-                                    }
-                                }))}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            />
-                            {errors.height && (
-                                <p className="mt-1 text-sm text-red-600">{errors.height}</p>
-                            )}
-                        </div>
-
-                        {/* Width input */}
-                        <div>
-                            <label htmlFor="width" className="block text-sm font-medium text-gray-700">
-                                Width (cm)
-                            </label>
-                            <input
-                                id="width"
-                                type="number"
-                                value={formData.attributes?.dimensions?.width || ''}
-                                onChange={e => setFormData((prev: Product) => ({
-                                    ...prev,
-                                    attributes: {
-                                        ...prev.attributes,
-                                        dimensions: {
-                                            ...(prev.attributes?.dimensions || {}),
-                                            width: parseFloat(e.target.value) || 0
-                                        }
-                                    }
-                                }))}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            />
-                            {errors.width && (
-                                <p className="mt-1 text-sm text-red-600">{errors.width}</p>
-                            )}
-                        </div>
-
-                        {/* Length input */}
-                        <div>
-                            <label htmlFor="length" className="block text-sm font-medium text-gray-700">
-                                Length (cm)
-                            </label>
-                            <input
-                                id="length"
-                                type="number"
-                                value={formData.attributes?.dimensions?.length || ''}
-                                onChange={e => setFormData((prev: Product) => ({
-                                    ...prev,
-                                    attributes: {
-                                        ...prev.attributes,
-                                        dimensions: {
-                                            ...(prev.attributes?.dimensions || {}),
-                                            length: parseFloat(e.target.value) || 0
-                                        }
-                                    }
-                                }))}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            />
-                            {errors.length && (
-                                <p className="mt-1 text-sm text-red-600">{errors.length}</p>
-                            )}
-                        </div>
-                        <p className="text-sm text-gray-500">Please, provide dimensions in HxWxL format</p>
                     </div>
                 )}
 

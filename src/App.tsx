@@ -2,7 +2,7 @@ import { Route, BrowserRouter as Router, Routes } from 'react-router';
 import './App.css';
 import ProductForm from './components/ProductForm';
 import ProductLists from './components/ProductLists';
-import { ProductProvider } from './context/ProductContext';
+import { ProductProvider } from './context/productContext';
 const App: React.FC = () => {
   return (
     <ProductProvider>
